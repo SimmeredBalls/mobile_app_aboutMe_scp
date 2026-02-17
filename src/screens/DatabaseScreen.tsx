@@ -1,28 +1,31 @@
-import React, { useRef, useEffect } from 'react'; // Added useRef, useEffect
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Animated, Easing } from 'react-native'; // Added Animated, Easing
+import React, { useState, useEffect } from 'react';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  ScrollView, 
+  Image, 
+  TouchableOpacity 
+} from 'react-native'; 
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Internal Assets & Custom Hooks
 import { COLORS, FONTS } from '../constants/Theme';
 import { RedactedText } from '../components/RedactedText';
-import { useTypewriter } from '../hooks/useTypewriter'; // NEW: Import hook
+import { useTypewriter } from '../hooks/useTypewriter'; 
 
+/**
+ * DATABASE CONTENT COMPONENT
+ * Handles the terminal logic, breach states, and classified data display.
+ */
 const DatabaseContent = () => {
   const insets = useSafeAreaInsets();
-  const [isLocked, setIsLocked] = React.useState(true);
-  const [isBreach, setIsBreach] = React.useState(false);
-
-  const triggerBreach = () => {
-    setIsBreach(!isBreach);
-    // Optional: Add Haptics here for a heavy "thump"
-  };
   
-  // Terminal log using the typewriter hook
-  const terminalLog = useTypewriter(
-    isLocked 
-    ? "> WAITING FOR BIOMETRIC SCAN..." 
-    : "> AUTH_USER: ADMIN\n> DECRYPTING: SUBJECT-2003\n> STATUS: ACCESS GRANTED", 
-    25
-  );
+  // --- STATE MANAGEMENT ---
+  const [isLocked, setIsLocked] = useState(true);
+  const [isBreach, setIsBreach] = useState(false);
 
+  // --- MOCKED SUBJECT DATA ---
   const subject = {
     id: "SUBJECT-2003",
     name: "STEPHEN JOHN C. ALAMBAN JR.",
@@ -33,37 +36,50 @@ const DatabaseContent = () => {
     status: "ACTIVE"
   };
 
+  // --- LOGIC: TERMINAL TEXT ---
+  // Custom hook handles the typing animation based on the lock status
+  const terminalLog = useTypewriter(
+    isLocked 
+    ? "> WAITING FOR BIOMETRIC SCAN..." 
+    : "> AUTH_USER: ADMIN\n> DECRYPTING: SUBJECT-2003\n> STATUS: ACCESS GRANTED", 
+    25
+  );
+
+  // Toggle function for the "Breach" emergency mode
+  const triggerBreach = () => setIsBreach(!isBreach);
+
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      {/* Visual Overlay: Static Scanline effect */}
       <View style={styles.scanline} pointerEvents="none" />
 
-      {/* HEADER - Turns Red on Breach */}
+      {/* --- SECTION: HUD HEADER --- */}
       <View style={[
         styles.hudHeader, 
-        isBreach && { borderColor: '#ff4444', backgroundColor: 'rgba(255, 68, 68, 0.15)' }
+        isBreach && styles.headerBreachActive
       ]}>
         <View>
-          <Text style={[styles.glitchText, isBreach && { color: '#ff4444' }]}>
+          <Text style={[styles.glitchText, isBreach && styles.textRed]}>
             {isBreach ? "!! BREACH DETECTED !!" : "SCIP-NET MOBILE TERMINAL"}
           </Text>
-          <Text style={[styles.subHeaderText, isBreach && { color: '#ff4444' }]}>
+          <Text style={[styles.subHeaderText, isBreach && styles.textRed]}>
             SITE-19 LOCKDOWN IN EFFECT
           </Text>
         </View>
       </View>
 
-      {/* TERMINAL - Turns Red on Breach */}
-      <View style={[styles.terminalWindow, isBreach && { borderColor: '#ff4444' }]}>
-        <Text style={[styles.terminalText, isBreach && { color: '#ff4444' }]}>
-          {isBreach ? "> ALERT: SUBJECT-2003 HAS LEFT CONTAINMENT\n> INITIATING MTF RESPONSE..." : terminalLog}
+      {/* --- SECTION: TERMINAL CONSOLE --- */}
+      <View style={[styles.terminalWindow, isBreach && styles.borderRed]}>
+        <Text style={[styles.terminalText, isBreach && styles.textRed]}>
+          {isBreach 
+            ? "> ALERT: SUBJECT-2003 HAS LEFT CONTAINMENT\n> INITIATING MTF RESPONSE..." 
+            : terminalLog}
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollBody} showsVerticalScrollIndicator={false}>
         
-
-
-        {/* INTERACTIVE UNLOCK BUTTON */}
+        {/* --- SECTION: AUTHENTICATION INTERFACE --- */}
         {isLocked ? (
           <TouchableOpacity style={styles.unlockButton} onPress={() => setIsLocked(false)}>
             <Text style={styles.unlockButtonText}>[!] INITIATE MEMETIC UNLOCK</Text>
@@ -75,12 +91,14 @@ const DatabaseContent = () => {
           </View>
         )}
 
-        {/* HIDDEN CONTENT (Only shows after unlock) */}
+        {/* --- SECTION: CLASSIFIED CONTENT (Conditional Rendering) --- */}
         {!isLocked && (
           <View>
-            {/* PROFILE CARD */}
+            {/* ENTITY PROFILE CARD */}
             <View style={styles.moduleFrame}>
-              <View style={styles.moduleHeader}><Text style={styles.moduleTitle}>ENTITY_PROFILE</Text></View>
+              <View style={styles.moduleHeader}>
+                <Text style={styles.moduleTitle}>ENTITY_PROFILE</Text>
+              </View>
               <View style={styles.row}>
                 <View style={styles.infoColumn}>
                   <Text style={styles.label}>ID: <Text style={styles.value}>{subject.id}</Text></Text>
@@ -89,19 +107,17 @@ const DatabaseContent = () => {
                   <Text style={styles.label}>COURSE: <Text style={styles.valueText}>{subject.course}</Text></Text>
                   <Text style={styles.label}>YEAR: <Text style={styles.valueText}>{subject.year}</Text></Text>
                 </View>
+
+                {/* SUBJECT VISUAL IDENTIFIER */}
                 <View style={styles.photoFrame}>
-                  {/* Add this wrapper back! It's the box that keeps the image 100x100 */}
                   <View style={styles.imageWrapper}>
                     <Image 
                       source={require('../../assets/man.jpg')} 
                       style={styles.subjectImage} 
                     />
                     <View style={styles.imageOverlay} />
-                    
-                    {/* If you add the animation later, the scanBar goes here too */}
                   </View>
-
-                  {/* These stay outside the wrapper to act as 'decorations' */}
+                  {/* Decorative UI Corners */}
                   <View style={styles.cornerTL} />
                   <View style={styles.cornerBR} />
                 </View>
@@ -110,7 +126,9 @@ const DatabaseContent = () => {
 
             {/* CONTAINMENT PARAMETERS */}
             <View style={styles.moduleFrame}>
-              <View style={styles.moduleHeader}><Text style={styles.moduleTitle}>CONTAINMENT_PARAMETERS</Text></View>
+              <View style={styles.moduleHeader}>
+                <Text style={styles.moduleTitle}>CONTAINMENT_PARAMETERS</Text>
+              </View>
               <Text style={styles.bodyText}>
                 Subject is contained within a residential unit located in <RedactedText>{subject.location}</RedactedText>.
                 {"\n\n"}Required resources:
@@ -122,19 +140,22 @@ const DatabaseContent = () => {
 
             {/* DESCRIPTION LOG */}
             <View style={styles.moduleFrame}>
-              <View style={styles.moduleHeader}><Text style={styles.moduleTitle}>DESCRIPTION_LOG</Text></View>
+              <View style={styles.moduleHeader}>
+                <Text style={styles.moduleTitle}>DESCRIPTION_LOG</Text>
+              </View>
               <Text style={styles.bodyText}>
                 Subject is a humanoid entity classified as an IT student. Demonstrates high aptitude for digital systems but irregular sleep cycles.
-                {"\n\n"}First documented at a 7/11 store exhibiting hunger-driven bargaining behavior.
               </Text>
               <View style={styles.noteLine}>
                 <Text style={styles.noteText}>ANALYST NOTE: Productivity increases under imminent deadlines.</Text>
               </View>
             </View>
 
-            {/* ACTIVITY LOG (New Tactical Style) */}
+            {/* TACTICAL ACTIVITY LOG */}
             <View style={styles.moduleFrame}>
-              <View style={styles.moduleHeader}><Text style={styles.moduleTitle}>ACTIVITY_LOG</Text></View>
+              <View style={styles.moduleHeader}>
+                <Text style={styles.moduleTitle}>ACTIVITY_LOG</Text>
+              </View>
               <View style={{padding: 12}}>
                 <Text style={styles.logLine}>02:14 — YOUTUBE CONSUMPTION DETECTED</Text>
                 <Text style={styles.logLine}>03:02 — LANGUAGE ACQUISITION (JPN)</Text>
@@ -145,13 +166,14 @@ const DatabaseContent = () => {
           </View>
         )}
 
+        {/* BREACH TOGGLE BUTTON */}
         <TouchableOpacity 
           style={[styles.breachButton, isBreach && styles.breachActive]} 
           onPress={triggerBreach}
         >
           <Text style={[
             styles.breachText, 
-            isBreach ? { color: '#000' } : { color: '#ff4444' } // Dynamic color change
+            isBreach ? { color: '#000' } : { color: '#ff4444' }
           ]}>
             {isBreach ? "TERMINATE ALERT" : "REPORT CONTAINMENT BREACH"}
           </Text>
@@ -159,8 +181,9 @@ const DatabaseContent = () => {
 
       </ScrollView>
 
+      {/* --- SECTION: FOOTER DATA --- */}
       <View style={styles.hudFooter}>
-        <Text style={[styles.footerInfo, isBreach && { color: '#ff4444' }]}>
+        <Text style={[styles.footerInfo, isBreach && styles.textRed]}>
           SYSTEM TIME: {new Date().toLocaleTimeString()} // LOG_ID: {Math.floor(Math.random() * 9000) + 1000}
         </Text>
       </View>
@@ -168,6 +191,9 @@ const DatabaseContent = () => {
   );
 };
 
+/**
+ * MAIN SCREEN EXPORT
+ */
 export default function DatabaseScreen() {
   return (
     <SafeAreaProvider>
@@ -176,13 +202,20 @@ export default function DatabaseScreen() {
   );
 }
 
+// --- STYLESHEET ---
 const styles = StyleSheet.create({
+  // Layout Containers
   container: { flex: 1, backgroundColor: '#020403' },
+  scrollBody: { padding: 15 },
+  
+  // Visual FX
   scanline: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(26, 255, 107, 0.03)',
     zIndex: 999,
   },
+
+  // Header Styles
   hudHeader: {
     padding: 20,
     borderBottomWidth: 2,
@@ -191,16 +224,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: 'rgba(26, 255, 107, 0.05)',
   },
+  headerBreachActive: { 
+    borderColor: '#ff4444', 
+    backgroundColor: 'rgba(255, 68, 68, 0.15)' 
+  },
   glitchText: { color: COLORS.terminalGreen, fontSize: 16, fontWeight: '900', letterSpacing: 1 },
   subHeaderText: { color: COLORS.terminalGreen, fontSize: 8, opacity: 0.7 },
-  clearanceBadge: {
-    borderWidth: 1,
-    borderColor: COLORS.warningYellow,
-    paddingHorizontal: 10,
-    justifyContent: 'center',
-  },
-  clearanceLevel: { color: COLORS.warningYellow, fontWeight: 'bold' },
-  scrollBody: { padding: 15 },
+
+  // Terminal Window
   terminalWindow: {
     backgroundColor: '#000',
     padding: 10,
@@ -208,7 +239,14 @@ const styles = StyleSheet.create({
     borderColor: COLORS.terminalGreen,
     marginBottom: 20,
   },
-  terminalText: { color: COLORS.terminalGreen, fontSize: 10, fontFamily: FONTS.mono, lineHeight: 14 },
+  terminalText: { 
+    color: COLORS.terminalGreen, 
+    fontSize: 10, 
+    fontFamily: FONTS.mono, 
+    lineHeight: 14 
+  },
+
+  // Module/Card Styles
   moduleFrame: {
     borderWidth: 1,
     borderColor: 'rgba(26, 255, 107, 0.3)',
@@ -221,64 +259,30 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   moduleTitle: { color: COLORS.terminalGreen, fontSize: 10, fontWeight: 'bold' },
+  
+  // Profile Section Styles
   row: { flexDirection: 'row', padding: 12 },
   infoColumn: { flex: 1.3 },
   label: { color: 'rgba(26, 255, 107, 0.5)', fontSize: 9, fontWeight: 'bold' },
   value: { color: COLORS.terminalGreen, fontSize: 15, fontWeight: '900' },
   valueText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
-  photoFrame: { 
-      flex: 0.88, 
-      position: 'relative', 
-      alignItems: 'flex-end', // Keeps the square pushed to the right
-      justifyContent: 'flex-start', 
-    },
-    imageWrapper: {
-      width: 100,
-      height: 100,
-      overflow: 'hidden', // This is crucial so the image doesn't bleed out
-      borderWidth: 1,
-      borderColor: 'rgba(26, 255, 107, 0.3)',
-    },
-  subjectImage: { 
-    width: '100%', 
-    height: '100%', 
-    resizeMode: 'cover',
-    opacity: 0.7
+  
+  // Image Section Styles
+  photoFrame: { flex: 0.88, position: 'relative', alignItems: 'flex-end' },
+  imageWrapper: {
+    width: 100,
+    height: 100,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(26, 255, 107, 0.3)',
   },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: COLORS.terminalGreen,
-    opacity: 0.15,
-  },
-  // The actual moving green line
-  scanBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: COLORS.terminalGreen,
-    zIndex: 10,
-    // Add a glow effect
-    shadowColor: COLORS.terminalGreen,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 5, // For Android glow
-  },
+  subjectImage: { width: '100%', height: '100%', resizeMode: 'cover', opacity: 0.7 },
+  imageOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: COLORS.terminalGreen, opacity: 0.15 },
   cornerTL: { position: 'absolute', top: 0, left: 35, width: 10, height: 10, borderLeftWidth: 2, borderTopWidth: 2, borderColor: COLORS.terminalGreen },
   cornerBR: { position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRightWidth: 2, borderBottomWidth: 2, borderColor: COLORS.terminalGreen },
-  camLabel: { color: COLORS.terminalGreen, fontSize: 7, marginTop: 4, textAlign: 'right' },
-  meterSection: { padding: 12, borderTopWidth: 1, borderColor: 'rgba(26, 255, 107, 0.1)' },
-  meterHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-  meterLabel: { color: COLORS.terminalGreen, fontSize: 9 },
-  meterValue: { color: COLORS.warningYellow, fontSize: 9, fontWeight: 'bold' },
-  meterBg: { height: 4, backgroundColor: '#111' },
-  meterFill: { height: '100%', backgroundColor: COLORS.terminalGreen, shadowColor: COLORS.terminalGreen, shadowRadius: 5, shadowOpacity: 1 },
-  bodyText: { color: '#d6ffd9', fontSize: 13, lineHeight: 20, padding: 12 },
-  highlightText: { color: COLORS.warningYellow, fontWeight: 'bold' },
-  hudFooter: { padding: 10, alignItems: 'center', borderTopWidth: 1, borderColor: 'rgba(26, 255, 107, 0.1)' },
-  footerInfo: { color: 'rgba(26, 255, 107, 0.3)', fontSize: 9, fontFamily: FONTS.mono },
 
+  // Text Content Styles
+  bodyText: { color: '#d6ffd9', fontSize: 13, lineHeight: 20, padding: 12 },
   logLine: {
     color: COLORS.terminalGreen,
     fontSize: 10,
@@ -288,20 +292,12 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     marginBottom: 5,
   },
-  noteLine: {
-    borderLeftWidth: 2,
-    borderColor: COLORS.warningYellow,
-    paddingLeft: 10,
-    margin: 12,
-  },
-  noteText: {
-    color: COLORS.warningYellow,
-    fontSize: 11,
-    fontStyle: 'italic',
-  },
+  noteLine: { borderLeftWidth: 2, borderColor: COLORS.warningYellow, paddingLeft: 10, margin: 12 },
+  noteText: { color: COLORS.warningYellow, fontSize: 11, fontStyle: 'italic' },
 
+  // Interactive Button Styles
   unlockButton: {
-    backgroundColor: 'rgba(255, 230, 109, 0.1)', // Subtle yellow tint
+    backgroundColor: 'rgba(255, 230, 109, 0.1)',
     borderWidth: 2,
     borderColor: COLORS.warningYellow,
     padding: 20,
@@ -309,18 +305,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderStyle: 'dashed',
   },
-  unlockButtonText: {
-    color: COLORS.warningYellow,
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 2,
-  },
-  unlockSubtext: {
-    color: COLORS.warningYellow,
-    fontSize: 8,
-    marginTop: 5,
-    opacity: 0.7,
-  },
+  unlockButtonText: { color: COLORS.warningYellow, fontSize: 14, fontWeight: '900', letterSpacing: 2 },
+  unlockSubtext: { color: COLORS.warningYellow, fontSize: 8, marginTop: 5, opacity: 0.7 },
   unlockedBadge: {
     backgroundColor: 'rgba(26, 255, 107, 0.1)',
     padding: 10,
@@ -329,12 +315,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  unlockedText: {
-    color: COLORS.terminalGreen,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
+  unlockedText: { color: COLORS.terminalGreen, fontSize: 12, fontWeight: 'bold' },
 
+  // Breach Utility Styles
   breachButton: {
     borderWidth: 2,
     borderColor: '#ff4444',
@@ -342,14 +325,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255, 68, 68, 0.05)',
     marginTop: 20,
-    marginBottom: 40, // Space at the bottom
+    marginBottom: 40,
   },
-  breachActive: {
-    backgroundColor: '#ff4444', // Solid red when active
-  },
-  breachText: {
-    fontWeight: '900',
-    fontSize: 14,
-    letterSpacing: 3,
-  },
+  breachActive: { backgroundColor: '#ff4444' },
+  breachText: { fontWeight: '900', fontSize: 14, letterSpacing: 3 },
+  
+  // Helpers
+  textRed: { color: '#ff4444' },
+  borderRed: { borderColor: '#ff4444' },
+  hudFooter: { padding: 10, alignItems: 'center', borderTopWidth: 1, borderColor: 'rgba(26, 255, 107, 0.1)' },
+  footerInfo: { color: 'rgba(26, 255, 107, 0.3)', fontSize: 9, fontFamily: FONTS.mono },
 });
